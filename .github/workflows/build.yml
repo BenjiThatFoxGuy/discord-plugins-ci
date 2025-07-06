@@ -16,6 +16,9 @@ env:
 
 permissions: write-all
 
+concurrency:
+  group: equicord-submodules
+  cancel-in-progress: false
 jobs:
     Build:
         name: Build Equicord
