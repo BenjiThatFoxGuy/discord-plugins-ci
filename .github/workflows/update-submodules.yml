@@ -4,6 +4,11 @@ on:
     schedule:
         - cron: '0 0 * * 1' # Every Monday at midnight UTC
     workflow_dispatch: {}
+    push:
+        branches:
+            - main
+        paths:
+            - '.github/workflows/update-submodules.yml'
 
 jobs:
   update-submodules:
