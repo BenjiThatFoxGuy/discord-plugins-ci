@@ -1,0 +1,8 @@
+[submodule "equicord"]
+	path = equicord
+	url = https://github.com/Equicord/Equicord.git
+	branch = main
+[submodule "userplugins-equicord"]
+	path = userplugins-equicord
+	url = https://github.com/BenjiThatFoxGuy/discord-plugins.git
+	branch = equicord

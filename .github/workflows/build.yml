@@ -1,0 +1,124 @@
+name: Release
+on:
+    push:
+        tags:
+            - v*
+        branches:
+            - main
+env:
+    FORCE_COLOR: true
+    GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+    GH_TOKEN: ${{ secrets.GH_TOKEN }}
+    USERNAME: GitHub-Actions
+
+permissions: write-all
+
+jobs:
+    Build:
+        name: Build Equicord
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                submodules: 'recursive'
+
+            - name: Update submodules
+              run: |
+                git submodule sync --recursive
+                git submodule update --init --recursive
+                if [ -d "userplugins-equicord" ]; then
+                  cd userplugins-equicord
+                  git fetch origin equicord:equicord
+                  git checkout equicord || git checkout -b equicord origin/equicord
+                  cd ..
+                fi
+                if [ -d "equicord" ]; then
+                  cd equicord
+                  git fetch origin main:main
+                  git checkout main || git checkout -b main origin/main
+                  cd ..
+                fi
+
+
+            - name: Copy equicord/package.json to root
+              run: cp equicord/package.json ./ ; cp equicord/pnpm-lock.yaml ./ ; cp equicord/pnpm-workspace.yaml ./
+
+            - uses: pnpm/action-setup@v3
+              with:
+                run_install: false
+
+            - name: Use Node.js 20
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: "pnpm"
+
+            - name: Install dependencies
+              working-directory: equicord
+              run: pnpm install --no-frozen-lockfile
+
+
+            - name: Move userplugins-equicord to equicord/userplugins
+              run: |
+                  if [ -d "userplugins-equicord" ]; then
+                    rm -rf equicord/src/userplugins
+                    mv userplugins-equicord equicord/src/userplugins
+                  fi
+
+            - name: Build web
+              working-directory: equicord
+              run: pnpm buildWebStandalone
+
+            - name: Build
+              working-directory: equicord
+              run: pnpm buildStandalone
+
+            - name: Generate plugin list
+              working-directory: equicord
+              run: pnpm generatePluginJson dist/plugins.json
+
+            - name: Generate Equicord plugin list
+              working-directory: equicord
+              run: pnpm generateEquicordPluginJson dist/equicordplugins.json
+
+            - name: Collect files to be released
+              working-directory: equicord
+              run: |
+                  cd dist
+                  mkdir release
+
+                  cp browser/browser.* release
+                  cp Vencord.user.{js,js.LEGAL.txt} release
+
+                  # copy the plugin data jsons, the extension zips and the desktop/vesktop asars
+                  cp *.{json,zip,asar} release
+
+                  # legacy un-asared files
+                  cp desktop/* release
+                  for file in equibop/*; do
+                    filename=$(basename "$file")
+                    cp "$file" "release/equibop${filename^}"
+                  done
+
+                  find release -size 0 -delete
+                  rm release/package.json
+                  rm release/*.map
+
+            - name: Upload Equicord Stable
+              if: ${{ github.ref_name == 'main' }}
+              working-directory: equicord
+              id: upload_release
+              continue-on-error: true
+              env:
+                GH_TOKEN: ${{ secrets.GH_TOKEN }}
+              run: |
+                  gh release upload latest --clobber dist/release/*
+
+            - name: Fallback - Upload release artifact if GH release upload failed
+              if: steps.upload_release.outcome == 'failure'
+              uses: actions/upload-artifact@v4
+              with:
+                name: equicord-release
+                path: equicord/dist/release/*
+                retention-days: 1
