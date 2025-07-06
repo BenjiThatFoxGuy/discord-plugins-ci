@@ -105,15 +105,18 @@ jobs:
                   rm release/package.json
                   rm release/*.map
 
+
             - name: Upload Equicord Stable
               if: ${{ github.ref_name == 'main' }}
-              working-directory: equicord
               id: upload_release
               continue-on-error: true
+              uses: softprops/action-gh-release@v2
+              with:
+                tag_name: latest
+                files: equicord/dist/release/*
+                fail_on_unmatched_files: false
               env:
-                GH_TOKEN: ${{ secrets.GH_TOKEN }}
-              run: |
-                  gh release upload latest --clobber dist/release/*
+                GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
             - name: Fallback - Upload release artifact if GH release upload failed
               if: steps.upload_release.outcome == 'failure'
