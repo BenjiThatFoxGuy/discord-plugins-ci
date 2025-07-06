@@ -5,6 +5,7 @@ on:
             - v*
         branches:
             - main
+    workflow_dispatch: {}
 env:
     FORCE_COLOR: true
     GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
