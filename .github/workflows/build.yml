@@ -130,4 +130,4 @@ jobs:
               with:
                 name: equicord-release
                 path: equicord/dist/release/*
-                retention-days: 1
+                retention-days: 7
