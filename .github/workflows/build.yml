@@ -1,7 +1,9 @@
 name: Release
 on:
     schedule:
-      - cron: '0 1 * * 1' # Every Monday at 1am UTC
+      - cron: '0 1 * * *' # Every day at 1am UTC
+      # - cron: '0 1 * * 1' # Every Monday at 1am UTC
+      
     push:
         tags:
             - v*
