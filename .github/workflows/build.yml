@@ -86,46 +86,48 @@ jobs:
                     fi
                   fi
 
-            - name: Compute Equicord submodule hash (9 chars)
-              id: compute_equicord_hash
-              working-directory: equicord
+            - name: Compute repo and Equicord submodule hashes (9 chars)
+              id: compute_hashes
               run: |
-                HASH=$(git rev-parse --short=9 HEAD)
-                echo "hash9=$HASH" >> $GITHUB_OUTPUT
+                REPO_HASH=$(git rev-parse --short=9 HEAD)
+                echo "repo_hash=$REPO_HASH" >> $GITHUB_OUTPUT
+                cd equicord
+                EQUI_HASH=$(git rev-parse --short=9 HEAD)
+                echo "equicord_hash=$EQUI_HASH" >> $GITHUB_OUTPUT
 
             - name: Build web
               working-directory: equicord
               env:
-                EQUICORD_HASH: ${{ steps.compute_equicord_hash.outputs.hash9 }}
+                EQUICORD_HASH: ${{ steps.compute_hashes.outputs.repo_hash }}
               run: pnpm buildWebStandalone
 
             - name: Build
               working-directory: equicord
               env:
                 EQUICORD_REMOTE: BenjiThatFoxGuy/discord-plugins-ci
-                EQUICORD_HASH: ${{ steps.compute_equicord_hash.outputs.hash9 }}
+                EQUICORD_HASH: ${{ steps.compute_hashes.outputs.repo_hash }}
               run: pnpm buildStandalone
 
             - name: Generate plugin list
               working-directory: equicord
               env:
                 EQUICORD_REMOTE: BenjiThatFoxGuy/discord-plugins-ci
-                EQUICORD_HASH: ${{ steps.compute_equicord_hash.outputs.hash9 }}
+                EQUICORD_HASH: ${{ steps.compute_hashes.outputs.repo_hash }}
               run: pnpm generatePluginJson dist/plugins.json
 
             - name: Generate Equicord plugin list
               working-directory: equicord
               env:
                 EQUICORD_REMOTE: BenjiThatFoxGuy/discord-plugins-ci
-                EQUICORD_HASH: ${{ steps.compute_equicord_hash.outputs.hash9 }}
+                EQUICORD_HASH: ${{ steps.compute_hashes.outputs.repo_hash }}
               run: pnpm generateEquicordPluginJson dist/equicordplugins.json
 
-            - name: Generate build metadata (equicord hash)
+            - name: Generate build metadata (repo and equicord hashes)
               id: gen_build_meta
               working-directory: equicord
               run: |
                 mkdir -p dist
-                echo "{\"equicordHash\":\"${{ steps.compute_equicord_hash.outputs.hash9 }}\"}" > dist/build-meta.json
+                echo "{\"ciHash\":\"${{ steps.compute_hashes.outputs.repo_hash }}\",\"repoHash\":\"${{ steps.compute_hashes.outputs.repo_hash }}\",\"equicordHash\":\"${{ steps.compute_hashes.outputs.equicord_hash }}\"}" > dist/build-meta.json
             
             - name: Collect files to be released
               working-directory: equicord

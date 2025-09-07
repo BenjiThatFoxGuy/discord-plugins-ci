@@ -88,7 +88,7 @@ async function fetchUpdates() {
         const meta = data.assets?.find((a: any) => a.name === "build-meta.json");
         if (meta?.browser_download_url) {
             const parsed = await fetchJson<any>(meta.browser_download_url);
-            releaseHash = parsed?.equicordHash || parsed?.gitHash || null;
+            releaseHash = parsed?.ciHash || parsed?.repoHash || parsed?.equicordHash || parsed?.gitHash || null;
         }
     } catch {
         // ignore, fallback to name parsing
