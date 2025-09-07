@@ -13,8 +13,12 @@ on:
 env:
     FORCE_COLOR: true
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    USERNAME: GitHub-Actions
-    EQUICORD_REMOTE: ${{ github.repository }}
+  USERNAME: GitHub-Actions
+  # Use the official Equicord repo for build-time updater metadata so
+  # the embedded git-remote points at the real upstream where commits
+  # can be compared. Using `${{ github.repository }}` caused the
+  # updater to attempt a compare on this unrelated repo and returned 404.
+  EQUICORD_REMOTE: "Equicord/Equicord"
 
 permissions: write-all
 
@@ -43,8 +47,16 @@ jobs:
                 fi
                 if [ -d "equicord" ]; then
                   cd equicord
+                  # Point the equicord submodule origin at the fork we want updates from
+                  git remote set-url origin https://github.com/${{ github.repository }}.git || true
                   git fetch origin main:main
                   git checkout main || git checkout -b main origin/main
+
+                  # Export the equicord commit hash and remote into the Actions environment so
+                  # the build-time ~git-remote and git-hash plugins embed the fork correctly.
+                  echo "EQUICORD_HASH=$(git rev-parse --short=9 HEAD)" >> $GITHUB_ENV
+                  echo "EQUICORD_REMOTE=${{ github.repository }}" >> $GITHUB_ENV
+
                   cd ..
                 fi
 
