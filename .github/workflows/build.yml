@@ -74,6 +74,32 @@ jobs:
                     mv userplugins-equicord equicord/src/userplugins
                   fi
 
+            - name: Remove stock Equicord plugins listed in file
+              run: |
+                  LIST_FILE="ci-overrides/remove-equicord-plugins.txt"
+                  BASE_DIR="equicord/src/equicordplugins"
+                  if [ -f "$LIST_FILE" ]; then
+                    echo "Reading removal list from $LIST_FILE"
+                    while IFS= read -r raw || [ -n "$raw" ]; do
+                      # strip CR, trim comments and trailing whitespace
+                      name=$(echo "$raw" | sed 's/\r//; s/#.*//; s/[[:space:]]*$//')
+                      [ -z "$name" ] && continue
+                      echo "Looking for plugins matching: $name"
+                      # find case-insensitively any folder that contains the token
+                      while IFS= read -r dir; do
+                        [ "$dir" = "$BASE_DIR" ] && continue
+                        echo "Removing: $dir"
+                        rm -rf "$dir"
+                      done < <(find "$BASE_DIR" -maxdepth 1 -mindepth 1 -type d -iname "*${name}*" -printf '%p\n')
+                    done < "$LIST_FILE"
+                  else
+                    echo "No removal list found at $LIST_FILE; skipping."
+                  fi
+
+            - name: Cleanup removal list (workspace only)
+              run: |
+                  rm -f ci-overrides/remove-equicord-plugins.txt || true
+
             - name: Apply CI overrides to Equicord
               run: |
                   if [ -d "ci-overrides/equicord" ]; then

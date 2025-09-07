@@ -1,0 +1,9 @@
+# List stock Equicord plugin folders to remove (one token per line)
+# Matching is case-insensitive and substring-based against folder names in equicord/src/equicordplugins
+# Examples:
+# themeLibrary       # will match and remove 'themeLibrary'
+#
+# Uncomment or add entries below:
+
+# Deprecated (Superseded)
+moreStickers
