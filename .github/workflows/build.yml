@@ -80,14 +80,20 @@ jobs:
 
             - name: Build
               working-directory: equicord
+              env:
+                EQUICORD_REMOTE: https://github.com/BenjiThatFoxGuy/discord-plugins-ci.git
               run: pnpm buildStandalone
 
             - name: Generate plugin list
               working-directory: equicord
+              env:
+                EQUICORD_REMOTE: https://github.com/BenjiThatFoxGuy/discord-plugins-ci.git
               run: pnpm generatePluginJson dist/plugins.json
 
             - name: Generate Equicord plugin list
               working-directory: equicord
+              env:
+                EQUICORD_REMOTE: https://github.com/BenjiThatFoxGuy/discord-plugins-ci.git
               run: pnpm generateEquicordPluginJson dist/equicordplugins.json
 
             - name: Collect files to be released
