@@ -1,6 +1,16 @@
 /*
- * Vencord, a modification for Discord's desktop app
- * Copyright (c) 2022 Vendicated and contributors
+ * Vencord, a modification for Discord's desktop app    } catch {
+        // If the commit graph doesn't exist in this repo, return a synthetic entry
+        // only if we already determined there's an update in fetchUpdates()
+        if (LatestReleaseHash && LatestReleaseHash !== gitHash) {
+            return [{
+                hash: String(LatestReleaseHash).slice(0, 7),
+                author: "Release",
+                message: "New release available"
+            }];
+        }
+        return [];
+    }t (c) 2022 Vendicated and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -84,17 +94,16 @@ async function fetchUpdates() {
         // ignore, fallback to name parsing
     }
 
-    // Fallback: parse from release name suffix after last space, only if it looks like a hash
-    if (!releaseHash && typeof data.name === "string" && data.name.length > 0) {
-        const suffix = data.name.slice(data.name.lastIndexOf(" ") + 1);
-        if (/^[a-fA-F0-9]{7,12}$/.test(suffix)) releaseHash = suffix;
-    }
-
-    // If we still couldn't determine a hash, assume no update information
+    // If we couldn't determine a hash from metadata, assume no update information
     if (!releaseHash) return false;
 
-    if (releaseHash === gitHash)
-        return false;
+    // Normalize and allow short vs long matches
+    const rel = String(releaseHash).trim();
+    const cur = String(gitHash).trim();
+    const relLower = rel.toLowerCase();
+    const curLower = cur.toLowerCase();
+    const hashesEqual = relLower === curLower || relLower.startsWith(curLower) || curLower.startsWith(relLower);
+    if (hashesEqual) return false;
 
     LatestReleaseHash = releaseHash;
 

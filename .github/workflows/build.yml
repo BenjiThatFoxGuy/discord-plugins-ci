@@ -86,28 +86,47 @@ jobs:
                     fi
                   fi
 
+            - name: Compute Equicord submodule hash (9 chars)
+              id: compute_equicord_hash
+              working-directory: equicord
+              run: |
+                HASH=$(git rev-parse --short=9 HEAD)
+                echo "hash9=$HASH" >> $GITHUB_OUTPUT
+
             - name: Build web
               working-directory: equicord
+              env:
+                EQUICORD_HASH: ${{ steps.compute_equicord_hash.outputs.hash9 }}
               run: pnpm buildWebStandalone
 
             - name: Build
               working-directory: equicord
               env:
                 EQUICORD_REMOTE: BenjiThatFoxGuy/discord-plugins-ci
+                EQUICORD_HASH: ${{ steps.compute_equicord_hash.outputs.hash9 }}
               run: pnpm buildStandalone
 
             - name: Generate plugin list
               working-directory: equicord
               env:
                 EQUICORD_REMOTE: BenjiThatFoxGuy/discord-plugins-ci
+                EQUICORD_HASH: ${{ steps.compute_equicord_hash.outputs.hash9 }}
               run: pnpm generatePluginJson dist/plugins.json
 
             - name: Generate Equicord plugin list
               working-directory: equicord
               env:
                 EQUICORD_REMOTE: BenjiThatFoxGuy/discord-plugins-ci
+                EQUICORD_HASH: ${{ steps.compute_equicord_hash.outputs.hash9 }}
               run: pnpm generateEquicordPluginJson dist/equicordplugins.json
 
+            - name: Generate build metadata (equicord hash)
+              id: gen_build_meta
+              working-directory: equicord
+              run: |
+                mkdir -p dist
+                echo "{\"equicordHash\":\"${{ steps.compute_equicord_hash.outputs.hash9 }}\"}" > dist/build-meta.json
+            
             - name: Collect files to be released
               working-directory: equicord
               run: |
@@ -117,7 +136,7 @@ jobs:
                   cp browser/browser.* release
                   cp Vencord.user.{js,js.LEGAL.txt} release
 
-                  # copy the plugin data jsons, the extension zips and the desktop/vesktop asars
+                  # copy the plugin data jsons, the extension zips and the desktop/vesktop asars (includes build-meta.json)
                   cp *.{json,zip,asar} release
 
                   # legacy un-asared files
@@ -130,24 +149,6 @@ jobs:
                   find release -size 0 -delete
                   rm release/package.json
                   rm release/*.map
-
-            - name: Generate build metadata (equicord hash)
-              id: gen_build_meta
-              working-directory: equicord
-              run: |
-                HASH=$(git rev-parse --short=9 HEAD)
-                mkdir -p dist
-                echo "{\"equicordHash\":\"$HASH\"}" > dist/build-meta.json
-                # copy into release directory as an asset
-                cp dist/build-meta.json dist/release/build-meta.json
-
-
-            - name: Compute Equicord submodule hash (9 chars)
-              id: compute_equicord_hash
-              working-directory: equicord
-              run: |
-                HASH=$(git rev-parse --short=9 HEAD)
-                echo "hash9=$HASH" >> $GITHUB_OUTPUT
 
 
             - name: Upload Equicord Stable
