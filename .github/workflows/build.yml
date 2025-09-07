@@ -45,9 +45,20 @@ jobs:
                   cd equicord
                   git fetch origin main:main
                   git checkout main || git checkout -b main origin/main
+                  # Update nested submodules inside equicord
+                  git submodule update --init --recursive
                   cd ..
                 fi
 
+            - name: Move userplugins-equicord to equicord/userplugins
+              run: |
+                if [ -d "userplugins-equicord" ]; then
+                  rm -rf equicord/src/userplugins
+                  mv userplugins-equicord equicord/src/userplugins
+                fi
+
+            - name: Debug userplugins directory
+              run: ls -l equicord/src/userplugins || echo "userplugins directory missing"
 
             - name: Copy equicord/package.json to root
               run: cp equicord/package.json ./ ; cp equicord/pnpm-lock.yaml ./ ; cp equicord/pnpm-workspace.yaml ./
@@ -65,14 +76,6 @@ jobs:
             - name: Install dependencies
               working-directory: equicord
               run: pnpm install --no-frozen-lockfile
-
-
-            - name: Move userplugins-equicord to equicord/userplugins
-              run: |
-                  if [ -d "userplugins-equicord" ]; then
-                    rm -rf equicord/src/userplugins
-                    mv userplugins-equicord equicord/src/userplugins
-                  fi
 
             - name: Build web
               working-directory: equicord
@@ -112,7 +115,6 @@ jobs:
                   find release -size 0 -delete
                   rm release/package.json
                   rm release/*.map
-
 
             - name: Upload Equicord Stable
               if: ${{ github.ref_name == 'main' }}
