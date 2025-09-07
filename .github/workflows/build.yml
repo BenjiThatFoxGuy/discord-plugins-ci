@@ -12,10 +12,9 @@ on:
     workflow_dispatch: {}
 env:
     FORCE_COLOR: true
-    GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-    GH_TOKEN: ${{ secrets.GH_TOKEN }}
-  USERNAME: GitHub-Actions
-  EQUICORD_REMOTE: ${{ github.repository }}
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    USERNAME: GitHub-Actions
+    EQUICORD_REMOTE: ${{ github.repository }}
 
 permissions: write-all
 
