@@ -14,7 +14,8 @@ env:
     FORCE_COLOR: true
     GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
     GH_TOKEN: ${{ secrets.GH_TOKEN }}
-    USERNAME: GitHub-Actions
+  USERNAME: GitHub-Actions
+  EQUICORD_REMOTE: ${{ github.repository }}
 
 permissions: write-all
 
