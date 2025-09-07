@@ -72,13 +72,37 @@ async function calculateGitChanges() {
 async function fetchUpdates() {
     const data = await githubGet("/releases/latest");
 
-    const hash = data.name.slice(data.name.lastIndexOf(" ") + 1);
-    if (hash === gitHash)
+    // Prefer explicit build metadata if present
+    let releaseHash: string | null = null;
+    try {
+        const meta = data.assets?.find((a: any) => a.name === "build-meta.json");
+        if (meta?.browser_download_url) {
+            const parsed = await fetchJson<any>(meta.browser_download_url);
+            releaseHash = parsed?.equicordHash || parsed?.gitHash || null;
+        }
+    } catch {
+        // ignore, fallback to name parsing
+    }
+
+    // Fallback: parse from release name suffix after last space, only if it looks like a hash
+    if (!releaseHash && typeof data.name === "string" && data.name.length > 0) {
+        const suffix = data.name.slice(data.name.lastIndexOf(" ") + 1);
+        if (/^[a-fA-F0-9]{7,12}$/.test(suffix)) releaseHash = suffix;
+    }
+
+    // If we still couldn't determine a hash, assume no update information
+    if (!releaseHash) return false;
+
+    if (releaseHash === gitHash)
         return false;
 
-    LatestReleaseHash = hash;
+    LatestReleaseHash = releaseHash;
 
-    const asset = data.assets.find(a => a.name === ASAR_FILE);
+    const asset = data.assets.find((a: any) => a.name === ASAR_FILE);
+    if (!asset?.browser_download_url) {
+        // No usable asset => treat as no update to avoid false positives
+        return false;
+    }
     PendingUpdate = asset.browser_download_url;
 
     return true;

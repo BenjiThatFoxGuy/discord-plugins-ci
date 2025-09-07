@@ -131,6 +131,16 @@ jobs:
                   rm release/package.json
                   rm release/*.map
 
+            - name: Generate build metadata (equicord hash)
+              id: gen_build_meta
+              working-directory: equicord
+              run: |
+                HASH=$(git rev-parse --short=9 HEAD)
+                mkdir -p dist
+                echo "{\"equicordHash\":\"$HASH\"}" > dist/build-meta.json
+                # copy into release directory as an asset
+                cp dist/build-meta.json dist/release/build-meta.json
+
 
             - name: Compute Equicord submodule hash (9 chars)
               id: compute_equicord_hash
