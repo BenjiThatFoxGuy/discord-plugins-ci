@@ -150,6 +150,18 @@ jobs:
                   rm release/package.json
                   rm release/*.map
 
+            - name: Compute release name
+              id: release_name
+              run: |
+                MSG="${GITHUB_HEAD_REF:+$(git log -1 --pretty=%s origin/$GITHUB_HEAD_REF)}"
+                if [ -z "$MSG" ]; then MSG=$(git log -1 --pretty=%s); fi
+                if [ "$MSG" = "chore: update submodule references to latest [automated]" ]; then
+                  NAME="scheduled: Daily keep up with upstream [Equicord]"
+                else
+                  NAME="$MSG"
+                fi
+                echo "name=$NAME" >> $GITHUB_OUTPUT
+
 
             - name: Upload Equicord Stable
               if: ${{ github.ref_name == 'main' }}
@@ -158,7 +170,7 @@ jobs:
               uses: softprops/action-gh-release@v2
               with:
                 tag_name: latest
-                name: Equicord Desktop ${{ steps.compute_equicord_hash.outputs.hash9 }}
+                name: ${{ steps.release_name.outputs.name }}
                 files: equicord/dist/release/*
                 fail_on_unmatched_files: false
               env:
