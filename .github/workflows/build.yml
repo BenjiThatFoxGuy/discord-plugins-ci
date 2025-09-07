@@ -13,12 +13,12 @@ on:
 env:
     FORCE_COLOR: true
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  USERNAME: GitHub-Actions
-  # Use the official Equicord repo for build-time updater metadata so
-  # the embedded git-remote points at the real upstream where commits
-  # can be compared. Using `${{ github.repository }}` caused the
-  # updater to attempt a compare on this unrelated repo and returned 404.
-  EQUICORD_REMOTE: "Equicord/Equicord"
+    USERNAME: GitHub-Actions
+    # Use the official Equicord repo for build-time updater metadata so
+    # the embedded git-remote points at the real upstream where commits
+    # can be compared. Using `${{ github.repository }}` caused the
+    # updater to attempt a compare on this unrelated repo and returned 404.
+    EQUICORD_REMOTE: "Equicord/Equicord"
 
 permissions: write-all
 
