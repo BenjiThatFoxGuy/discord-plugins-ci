@@ -120,6 +120,14 @@ jobs:
                   rm release/*.map
 
 
+            - name: Compute Equicord submodule hash (9 chars)
+              id: compute_equicord_hash
+              working-directory: equicord
+              run: |
+                HASH=$(git rev-parse --short=9 HEAD)
+                echo "hash9=$HASH" >> $GITHUB_OUTPUT
+
+
             - name: Upload Equicord Stable
               if: ${{ github.ref_name == 'main' }}
               id: upload_release
@@ -127,6 +135,7 @@ jobs:
               uses: softprops/action-gh-release@v2
               with:
                 tag_name: latest
+                name: Equicord Desktop ${{ steps.compute_equicord_hash.outputs.hash9 }}
                 files: equicord/dist/release/*
                 fail_on_unmatched_files: false
               env:
