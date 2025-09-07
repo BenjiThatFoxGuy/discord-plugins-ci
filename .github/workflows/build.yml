@@ -74,6 +74,18 @@ jobs:
                     mv userplugins-equicord equicord/src/userplugins
                   fi
 
+            - name: Apply CI overrides to Equicord
+              run: |
+                  if [ -d "ci-overrides/equicord" ]; then
+                    if command -v rsync >/dev/null 2>&1; then
+                      rsync -a ci-overrides/equicord/ equicord/
+                    else
+                      shopt -s dotglob || true
+                      cp -r ci-overrides/equicord/* equicord/ || true
+                      shopt -u dotglob || true
+                    fi
+                  fi
+
             - name: Build web
               working-directory: equicord
               run: pnpm buildWebStandalone
