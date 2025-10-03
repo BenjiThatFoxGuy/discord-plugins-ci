@@ -62,40 +62,35 @@ jobs:
           git add .
           
           if ! git diff --cached --quiet; then
-            # Build commit message with submodule updates
-            COMMIT_MSG="chore: update submodule references [automated]"
-            COMMIT_BODY=""
+            # Find the latest commit message from updated submodules
+            COMMIT_MSG=""
             
             # Check equicord updates
             if [ -d "equicord" ] && [ -n "$EQUICORD_OLD_COMMIT" ]; then
               cd equicord
               NEW_COMMIT=$(git rev-parse HEAD)
               if [ "$EQUICORD_OLD_COMMIT" != "$NEW_COMMIT" ]; then
-                LATEST_COMMIT_MSG=$(git log -1 --pretty=format:"%s" HEAD)
-                COMMIT_BODY="${COMMIT_BODY}\n\nequicord: ${LATEST_COMMIT_MSG}"
+                COMMIT_MSG=$(git log -1 --pretty=format:"%s" HEAD)
               fi
               cd ..
             fi
             
-            # Check userplugins-equicord updates
+            # Check userplugins-equicord updates (this will override if both are updated)
             if [ -d "userplugins-equicord" ] && [ -n "$USERPLUGINS_OLD_COMMIT" ]; then
               cd userplugins-equicord
               NEW_COMMIT=$(git rev-parse HEAD)
               if [ "$USERPLUGINS_OLD_COMMIT" != "$NEW_COMMIT" ]; then
-                LATEST_COMMIT_MSG=$(git log -1 --pretty=format:"%s" HEAD)
-                COMMIT_BODY="${COMMIT_BODY}\n\nuserplugins-equicord: ${LATEST_COMMIT_MSG}"
+                COMMIT_MSG=$(git log -1 --pretty=format:"%s" HEAD)
               fi
               cd ..
             fi
             
-            # Create full commit message
-            if [ -n "$COMMIT_BODY" ]; then
-              FULL_MSG="${COMMIT_MSG}${COMMIT_BODY}"
-            else
-              FULL_MSG="$COMMIT_MSG"
+            # Use original commit message or fallback
+            if [ -z "$COMMIT_MSG" ]; then
+              COMMIT_MSG="chore: update submodule references [automated]"
             fi
             
-            git commit -m "$FULL_MSG"
+            git commit -m "$COMMIT_MSG"
             git push
           else
             echo "No submodule updates."
