@@ -30,26 +30,72 @@ jobs:
         run: |
           git submodule sync --recursive
           git submodule update --init --recursive
-          if [ -d "userplugins-equicord" ]; then
-            cd userplugins-equicord
-            git fetch origin equicord:equicord
-            git checkout equicord || git checkout -b equicord origin/equicord
-            cd ..
-          fi
+          
+          # Store original commit hashes
+          EQUICORD_OLD_COMMIT=""
+          USERPLUGINS_OLD_COMMIT=""
+          
           if [ -d "equicord" ]; then
             cd equicord
+            EQUICORD_OLD_COMMIT=$(git rev-parse HEAD)
             git fetch origin main:main
             git checkout main || git checkout -b main origin/main
             cd ..
           fi
+          
+          if [ -d "userplugins-equicord" ]; then
+            cd userplugins-equicord
+            USERPLUGINS_OLD_COMMIT=$(git rev-parse HEAD)
+            git fetch origin equicord:equicord
+            git checkout equicord || git checkout -b equicord origin/equicord
+            cd ..
+          fi
+          
+          # Export for use in next step
+          echo "EQUICORD_OLD_COMMIT=$EQUICORD_OLD_COMMIT" >> $GITHUB_ENV
+          echo "USERPLUGINS_OLD_COMMIT=$USERPLUGINS_OLD_COMMIT" >> $GITHUB_ENV
 
       - name: Commit and push if submodules updated
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
+          
           if ! git diff --cached --quiet; then
-            git commit -m "chore: update submodule references to latest [automated]"
+            # Build commit message with submodule updates
+            COMMIT_MSG="chore: update submodule references [automated]"
+            COMMIT_BODY=""
+            
+            # Check equicord updates
+            if [ -d "equicord" ] && [ -n "$EQUICORD_OLD_COMMIT" ]; then
+              cd equicord
+              NEW_COMMIT=$(git rev-parse HEAD)
+              if [ "$EQUICORD_OLD_COMMIT" != "$NEW_COMMIT" ]; then
+                LATEST_COMMIT_MSG=$(git log -1 --pretty=format:"%s" HEAD)
+                COMMIT_BODY="${COMMIT_BODY}\n\nequicord: ${LATEST_COMMIT_MSG}"
+              fi
+              cd ..
+            fi
+            
+            # Check userplugins-equicord updates
+            if [ -d "userplugins-equicord" ] && [ -n "$USERPLUGINS_OLD_COMMIT" ]; then
+              cd userplugins-equicord
+              NEW_COMMIT=$(git rev-parse HEAD)
+              if [ "$USERPLUGINS_OLD_COMMIT" != "$NEW_COMMIT" ]; then
+                LATEST_COMMIT_MSG=$(git log -1 --pretty=format:"%s" HEAD)
+                COMMIT_BODY="${COMMIT_BODY}\n\nuserplugins-equicord: ${LATEST_COMMIT_MSG}"
+              fi
+              cd ..
+            fi
+            
+            # Create full commit message
+            if [ -n "$COMMIT_BODY" ]; then
+              FULL_MSG="${COMMIT_MSG}${COMMIT_BODY}"
+            else
+              FULL_MSG="$COMMIT_MSG"
+            fi
+            
+            git commit -m "$FULL_MSG"
             git push
           else
             echo "No submodule updates."
