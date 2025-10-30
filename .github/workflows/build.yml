@@ -161,8 +161,8 @@ jobs:
                   cd dist
                   mkdir release
 
-                  cp browser/browser.* release
-                  cp Vencord.user.{js,js.LEGAL.txt} release
+                  # cp browser/browser.* release
+                  # cp Vencord.user.{js,js.LEGAL.txt} release
 
                   # copy the plugin data jsons, the extension zips and the desktop/vesktop asars (includes build-meta.json)
                   cp *.{json,zip,asar} release
