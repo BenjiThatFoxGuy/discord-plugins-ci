@@ -38,8 +38,8 @@ jobs:
           if [ -d "equicord" ]; then
             cd equicord
             EQUICORD_OLD_COMMIT=$(git rev-parse HEAD)
-            git fetch origin main:main
-            git checkout main || git checkout -b main origin/main
+            git fetch origin dev:dev
+            git checkout dev || git checkout -b dev origin/dev
             cd ..
           fi
           
